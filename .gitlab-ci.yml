@@ -1,0 +1,68 @@
+stages:
+  - build
+
+variables:
+  CMAKE_BINARY: "cmake"
+  PYTHON2_BINARY: "python2"
+  PYTHON3_BINARY: "python3"
+
+.unix_build_job_template: &unix_build_job_template
+  stage: build
+  script:
+    - mkdir build_py27 && cd build_py27
+    - $CMAKE_BINARY -DCMAKE_BUILD_TYPE=Release -DPYBIND11_PYTHON_VERSION=2.7 ..
+    - $CMAKE_BINARY --build . --target install -- -j4
+    - cd ../ && mkdir build_py3 && cd build_py3
+    - $CMAKE_BINARY -DCMAKE_BUILD_TYPE=Release -DPYBIND11_PYTHON_VERSION=3 ..
+    - $CMAKE_BINARY --build . --target install -- -j4
+  artifacts:
+    name: "${CI_PROJECT_NAME}-${CI_COMMIT_REF_NAME}-${CI_JOB_NAME}"
+    paths:
+      - build_py27/INSTALL
+      - build_py3/INSTALL
+
+.windows_build_job_template: &windows_build_job_template
+  stage: build
+  script:
+    - if exist build_py27 rd /s /q build_py27
+    - if exist build_py3 rd /s /q build_py3
+    - call "%programfiles(x86)%\\Microsoft Visual Studio 14.0\\VC\\vcvarsall.bat" %ARCH%
+    - mkdir build_py27 && cd build_py27
+    - cmake -DCMAKE_BUILD_TYPE=Release -DPYTHON_EXECUTABLE="%PYTHON2_BINARY%" -G "NMake Makefiles JOM" ..
+    - cmake --build . --target install -- /J4
+    - cd ../ && mkdir build_py3 && cd build_py3
+    - cmake -DCMAKE_BUILD_TYPE=Release -DPYTHON_EXECUTABLE="%PYTHON3_BINARY%" -G "NMake Makefiles JOM" ..
+    - cmake --build . --target install -- /J4
+  artifacts:
+    name: "%CI_PROJECT_NAME%-%CI_COMMIT_REF_NAME%-%CI_JOB_NAME%"
+    paths:
+      - build_py27/INSTALL
+      - build_py3/INSTALL
+
+build:linux:x86_64:
+  image: git01.iis.fhg.de:5005/grp-ils/shore_py_bindings:ubuntu16.04
+  <<: *unix_build_job_template
+  tags: [linux, docker]
+
+build:osx:x86_64:
+  variables:
+    CMAKE_BINARY: "cmake3"
+  stage: build
+  <<: *unix_build_job_template
+  tags: [osx]
+  
+build:windows:x86:
+  variables:
+    ARCH: "x86"
+    PYTHON2_BINARY: "C:\\Python27\\python.exe"
+    PYTHON3_BINARY: "C:\\Python36-32\\python.exe"
+  <<: *windows_build_job_template
+  tags: [windows, vs2015]
+
+build:windows:x86-64:
+  variables:
+    ARCH: "amd64"
+    PYTHON2_BINARY: "C:\\Python27-amd64\\python.exe"
+    PYTHON3_BINARY: "C:\\Python36-amd64\\python.exe"
+  <<: *windows_build_job_template
+  tags: [windows, vs2015]
