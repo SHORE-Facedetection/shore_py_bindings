@@ -18,6 +18,69 @@
 
 namespace py = pybind11;
 
+Shore::Content const* EngineProcess(Shore::Engine& eng,
+    pybind11::array_t<unsigned char, py::array::c_style | py::array::forcecast> image,
+    char const* colorSpace)
+{
+    const unsigned char* img = nullptr;
+    Shore::Content const* content = nullptr;
+    if (image.ndim() != 1)
+    {
+        unsigned long width = image.shape(1);
+        unsigned long height = image.shape(0);
+        unsigned long planes = 0;
+        long pixelFeed = 0, lineFeed = 0, planeFeed = 0;
+        if (!std::string(colorSpace).compare("GRAYSCALE")) 
+        {
+            if (image.ndim() != 2) 
+            {
+                throw std::runtime_error(
+                    "Expected number of dimensions is 2, got " +
+                    std::to_string(image.ndim()));
+            }
+            planes = 1;
+            lineFeed = width;
+            pixelFeed = 1;
+            planeFeed = 0;
+        }
+        else if (!std::string(colorSpace).compare("RGB") ||
+            !std::string(colorSpace).compare("BGR")) {
+            if (image.ndim() != 3 && image.shape(2) != 3) 
+            {
+                std::string err =
+                    "Expected number of dimensions is 3, got " +
+                    std::to_string(image.ndim());
+                err += ", expected number of color planes is 3, got " +
+                    std::to_string(image.shape(2));
+                throw std::runtime_error(err);
+            }
+            planes = 3;
+            lineFeed = image.strides(0);
+            pixelFeed = image.strides(1);
+            planeFeed = image.strides(2);
+        }
+        else 
+        {
+            throw std::runtime_error("unsupported colorspace: " +
+                std::string(colorSpace));
+        }
+        img = reinterpret_cast<const unsigned char*>(image.data());
+        content = eng.Process(img, width, height, planes, pixelFeed,
+            lineFeed, planeFeed, colorSpace);
+        if (!content) 
+        {
+            throw std::runtime_error(
+                "Failed to retrieve Shore content of image.");
+        }
+        return content;
+    }
+    else
+    {
+        throw std::runtime_error(
+            "Image dimension is not supported. Not supported dimension is " +
+            std::to_string(image.ndim()));
+    }
+}
 /**
  * Initializes the Shore module.
  *
@@ -25,36 +88,38 @@ namespace py = pybind11;
 PYBIND11_MODULE(shore, shoreModule) {
 
     shoreModule.doc() = "Shore", "Interface to access the Shore API.";
-    shoreModule.def("CreateFaceEngine", 
-        &Shore::CreateFaceEngine, 
+    shoreModule.def("CreateFaceEngine",
+        &Shore::CreateFaceEngine,
         "Creates face engine",
-        py::arg("timeBase") =       0,
+        py::arg("timeBase") = 0,
         py::arg("updateTimeBase") = true,
-        py::arg("threadCount") =    2,
-        py::arg("modelType") =      "Face.Front",
-        py::arg("imageScale") =     1,
-        py::arg("minFaceSize") =    0,
-        py::arg("minFaceScore") =   0,
+        py::arg("threadCount") = 2,
+        py::arg("modelType") = "Face.Front",
+        py::arg("imageScale") = 1,
+        py::arg("minFaceSize") = 0,
+        py::arg("minFaceScore") = 0,
         py::arg("idMemoryLength") = 0,
-        py::arg("idMemoryType") =   "Spatial",
-        py::arg("trackFaces") =     true,
-        py::arg("phantomTrap") =    "Off",
-        py::arg("searchEyes") =     true,
-        py::arg("searchNose") =     false,
-        py::arg("searchMouth") =    false,
-        py::arg("analyzeEyes") =    false,
-        py::arg("analyzeMouth") =   false,
-        py::arg("analyzeGender") =  false,
-        py::arg("analyzeAge") =     false,
-        py::arg("analyzeHappy") =   false,
-        py::arg("analyzeSad") =     false,
-        py::arg("analyzeSurprized") = false,
-        py::arg("analyzeAngry") =   false,
-#if SHORE_VERSION >= 170
-        py::arg("pointLocator") =   "Off",
-#endif
+        py::arg("idMemoryType") = "Spatial",
+        py::arg("trackFaces") = true,
+        py::arg("phantomTrap") = "Off",
+        py::arg("searchParts") = "Off",
+        py::arg("analyzeParts") = "Off",
+        py::arg("analyzeDemography") = "Off",
+        py::arg("analyzeExpression") = "Off",
+        py::arg("analyzeValence") = "Off",
+        py::arg("pointLocator") = "Off",
+        py::arg("singleFaceMode") = false,
         py::return_value_policy::reference
     );
+
+    shoreModule.def("CreateEngine",
+        &Shore::CreateEngine,
+        "Creates a Shore engine with a Lua setup script",
+        py::arg("setupScript"),
+        py::arg("setupCall"),
+        py::return_value_policy::reference
+    );
+
     shoreModule.def("DeleteEngine",
         &Shore::DeleteEngine,
         "Deletes the Shore engine",
@@ -67,60 +132,10 @@ PYBIND11_MODULE(shore, shoreModule) {
     );
 
     py::class_<Shore::Engine, std::unique_ptr<Shore::Engine, py::nodelete>> engine(shoreModule, "Engine");
-    engine.def("Process",
-        [](Shore::Engine &eng,
-        // second template parameter ensures that only dense packed arrays
-        // are accepted
-          pybind11::array_t<unsigned char, py::array::c_style | py::array::forcecast> image,
-           char const *colorSpace) {
-            const unsigned char *img;
-            Shore::Content const *content;
-            unsigned long width = image.shape(1);
-            unsigned long height = image.shape(0);
-            unsigned long planes = 0;
-            long pixelFeed = 0, lineFeed = 0, planeFeed = 0;
-            if (!std::string(colorSpace).compare("GRAYSCALE")) {
-                if (image.ndim() != 2) {
-                    throw std::runtime_error(
-                        "Expected number of dimensions is 2, got " +
-                        std::to_string(image.ndim()));
-                }
-                planes = 1;
-                lineFeed = width;
-                pixelFeed = 1;
-                planeFeed = 0;
-#ifdef SHORE_SUPPORTS_COLOR
-            } else if (!std::string(colorSpace).compare("RGB") ||
-                       !std::string(colorSpace).compare("BGR")) {
-                if (image.ndim() != 3 && image.shape(2) != 3) {
-                    std::string err =
-                        "Expected number of dimensions is 3, got " +
-                        std::to_string(image.ndim());
-                    err += ", expected number of color planes is 3, got " +
-                           std::to_string(image.shape(2));
-                    throw std::runtime_error(err);
-                }
-                planes = 3;
-                lineFeed = width;
-                pixelFeed = image.itemsize() * 3;
-                planeFeed = image.itemsize();
-#endif
-            } else {
-                throw std::runtime_error("unsupported colorspace: " +
-                                         std::string(colorSpace));
-            }
-            img = reinterpret_cast<const unsigned char *>(image.data());
-            content = eng.Process(img, width, height, planes, pixelFeed,
-                                  lineFeed, planeFeed, colorSpace);
-            if (!content) {
-                throw std::runtime_error(
-                    "Failed to retrieve Shore content of image.");
-            }
-            return content;
-        },
+    engine.def("Process", &EngineProcess,
         "Applies the Shore engine to the given image",
         pybind11::arg("image"),
-        pybind11::arg("colorSpace") = "GRAYSCALE",
+        pybind11::arg("colorSpace") = "BGR",
         pybind11::return_value_policy::reference);
 
     // Bind Region class (need nodelete because of protected destructor).

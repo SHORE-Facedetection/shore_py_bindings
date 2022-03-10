@@ -6,11 +6,9 @@ set (src
     $<TARGET_PROPERTY:shore,SHORE_MODEL_SOURCE>
 )
 pybind11_add_module(${SHORE_BINDINGS} SHARED ${src})
-if (TARGET shore_stub)
-    set (SHORE_TARGET shore_stub )
-else ()
-    set (SHORE_TARGET shore)
-endif()
+
+set (SHORE_TARGET shore)
+
 target_link_libraries(${SHORE_BINDINGS} PUBLIC ${SHORE_TARGET} PRIVATE pybind11::module)
 
 set_target_properties(${SHORE_BINDINGS}
@@ -39,7 +37,9 @@ install (
         FILES
             $<TARGET_PROPERTY:shore,SHORE_MODEL_CTM>
             $<TARGET_PROPERTY:shore,IMPORTED_LOCATION>
+            ${CMAKE_SOURCE_DIR}/src/pyshore.py
             ${CMAKE_SOURCE_DIR}/test/video.py
+            ${CMAKE_SOURCE_DIR}/test/run_shore.py
             ${CMAKE_SOURCE_DIR}/test/requirements.txt
             ${CMAKE_SOURCE_DIR}/Readme.md
         DESTINATION ${INSTALL_ROOT}
@@ -49,9 +49,9 @@ set (INSTALL_COPYRIGHT_DIR ${INSTALL_ROOT}/Copyright)
 install (DIRECTORY DESTINATION ${INSTALL_COPYRIGHT_DIR})
 install (
         FILES
-            ${CMAKE_SOURCE_DIR}/libs/pybind11-2.2.3/LICENSE
+            ${CMAKE_SOURCE_DIR}/libs/pybind11-2.8.1/LICENSE
         DESTINATION
-            ${INSTALL_COPYRIGHT_DIR}/pybind11-2.2.3
+            ${INSTALL_COPYRIGHT_DIR}/pybind11-2.8.1
 )
 # License of SHORE
 get_target_property(SHORE_SDK_DIR shore SHORE_SDK_DIR)

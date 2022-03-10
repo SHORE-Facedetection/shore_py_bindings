@@ -1,10 +1,6 @@
-FROM ubuntu:16.04
-
+FROM python:3.10-bullseye
 RUN apt-get update && apt-get install -y \
       build-essential \
       git \
       cmake \
-      libopencv-dev \
-      python2.7-dev \
-      python3-dev
-      
+      libopencv-dev

@@ -1,20 +1,11 @@
 set(SHORE_SDK_PATH ${CMAKE_SOURCE_DIR}/ShoreSDK CACHE PATH "Select path to SHORE SDK!")
-set(SHORE_VERSION 161 CACHE STRING "Select required version of SHORE!" )
+set(SHORE_VERSION 200 CACHE STRING "Select required version of SHORE!" )
 set(SHORE_LIB_PREFIX CACHE STRING 
     "Select Shore lib Prefix(e.g. Win32|Win64|Linux_x64|Linux_x86|Linux_armv7hf). Leave empty to autodetect")
 
 file(GLOB_RECURSE SHORE_LIB_PATH_SHARED LIST_DIRECTORIES=false 
     ${SHORE_SDK_PATH}/Lib/${SHORE_LIB_PREFIX}*/${CMAKE_SHARED_LIBRARY_PREFIX}Shore${SHORE_VERSION}${CMAKE_SHARED_LIBRARY_SUFFIX}
 )
-# protected packages of shore can contain stub library which must be used for linking
-foreach( _SHORE_LIB_PATH ${SHORE_LIB_PATH_SHARED})
-    string(REGEX MATCH ".*_stub.*" item "${_SHORE_LIB_PATH}")
-    if (item)
-        message(STATUS "SHORE stub library found: ${item}")
-        set (SHORE_STUB_LIB_PATH ${item})
-        list (REMOVE_ITEM SHORE_LIB_PATH_SHARED ${item})
-    endif()
-endforeach()
 
 file(GLOB_RECURSE SHORE_LIB_PATH_STATIC LIST_DIRECTORIES=false
     ${SHORE_SDK_PATH}/Lib/${SHORE_LIB_PREFIX}*/${CMAKE_STATIC_LIBRARY_PREFIX}Shore${SHORE_VERSION}${CMAKE_STATIC_LIBRARY_SUFFIX}
@@ -51,19 +42,24 @@ if (WIN32)
 endif()
 set_target_properties(shore PROPERTIES INTERFACE_INCLUDE_DIRECTORIES ${SHORE_SDK_PATH}/Lib)
 set(SHORE_MODEL_SOURCE 
+    ${SHORE_SDK_PATH}/Model/AgeGender_28x28_2020_12_01_112145.cpp
     ${SHORE_SDK_PATH}/Model/Age_28x28_2009_09_17_131241.cpp
+    ${SHORE_SDK_PATH}/Model/Age_28x28_2020_10_12_114538.cpp
     ${SHORE_SDK_PATH}/Model/Angry_26x26_2008_10_21_152601.cpp
-    ${SHORE_SDK_PATH}/Model/Face_24x24_2009_09_02_185611_48.cpp
-    ${SHORE_SDK_PATH}/Model/FaceFront_24x24_2008_08_29_161712_7.cpp
+    ${SHORE_SDK_PATH}/Model/Expression_28x28_2021_09_17_084600.cpp
     ${SHORE_SDK_PATH}/Model/FaceFrontId_36x44_2009_08_07_122105.cpp
+    ${SHORE_SDK_PATH}/Model/FaceFront_24x24_2008_08_29_161712_7.cpp
     ${SHORE_SDK_PATH}/Model/FaceRotated_24x24_2008_10_15_180432_24.cpp
+    ${SHORE_SDK_PATH}/Model/Face_24x24_2009_09_02_185611_48.cpp
     ${SHORE_SDK_PATH}/Model/Gender_26x26_2008_09_04_174103.cpp
     ${SHORE_SDK_PATH}/Model/Happy_26x26_2008_09_08_124526.cpp
     ${SHORE_SDK_PATH}/Model/LeftEyeClosed_16x16_2008_10_23_185544.cpp
     ${SHORE_SDK_PATH}/Model/LeftEyeFront_16x16_2008_10_20_190938_4.cpp
     ${SHORE_SDK_PATH}/Model/MouthFront_16x14_2008_10_20_190419_4.cpp
     ${SHORE_SDK_PATH}/Model/MouthOpen_16x14_2008_10_23_185229.cpp
+    ${SHORE_SDK_PATH}/Model/NegativeEmotion_30x30_2011_02_11_125002.cpp
     ${SHORE_SDK_PATH}/Model/NoseFront_16x16_2008_10_17_134731_4.cpp
+    ${SHORE_SDK_PATH}/Model/PositiveEmotion_30x30_2011_05_04_094834.cpp
     ${SHORE_SDK_PATH}/Model/RightEyeClosed_16x16_2008_10_23_185544.cpp
     ${SHORE_SDK_PATH}/Model/RightEyeFront_16x16_2008_10_20_190953_4.cpp
     ${SHORE_SDK_PATH}/Model/Sad_26x26_2008_10_21_161703.cpp
@@ -78,20 +74,7 @@ set (SHORE_CREATE_DETECT_AND_TRACK_ENGINE_CPP ${SHORE_SDK_PATH}/Lib/CreateDetect
 set (SHORE_INCLUDE_DIR ${SHORE_SDK_PATH}/Lib)
 
 set_property(TARGET shore PROPERTY SHORE_MODEL_SOURCE ${SHORE_MODEL_SOURCE})
-if (${SHORE_VERSION} GREATER 161 )
-    set_property(TARGET shore PROPERTY SHORE_MODEL_CTM ${SHORE_MODEL_CTM})
-endif()
+set_property(TARGET shore PROPERTY SHORE_MODEL_CTM ${SHORE_MODEL_CTM})
 set_property(TARGET shore PROPERTY SHORE_CREATE_FACE_ENGINE_CPP ${SHORE_CREATE_FACE_ENGINE_CPP})
 set_property(TARGET shore PROPERTY SHORE_CREATE_DETECT_AND_TRACK_ENGINE_CPP ${SHORE_CREATE_DETECT_AND_TRACK_ENGINE_CPP})
 set_property(TARGET shore PROPERTY SHORE_SDK_DIR ${SHORE_SDK_PATH})
-
-if (SHORE_STUB_LIB_PATH)
-    # this library must be used for linking only, as long the protected 
-    # shore library doesn't contain symbols
-    add_library(shore_stub SHARED IMPORTED GLOBAL)
-    set_target_properties(shore_stub
-        PROPERTIES
-            IMPORTED_LOCATION ${SHORE_STUB_LIB_PATH}
-            INTERFACE_INCLUDE_DIRECTORIES $<TARGET_PROPERTY:shore,INTERFACE_INCLUDE_DIRECTORIES>
-    )
-endif()
