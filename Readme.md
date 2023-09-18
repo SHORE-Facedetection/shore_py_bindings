@@ -8,7 +8,7 @@ We do not offer any official support for the Python bindings. See the LICENSE fi
 Please refer to the provided Dockerfile for a list of required packages. 
 ```
 mkdir build && cd build
-cmake -DCMAKE_BUILD_TYPE=Release -DSHORE_SDK_PATH=${YOUR_SHORE_SDK_PATH} -DSHORE_VERSION=200 ../
+cmake -DCMAKE_BUILD_TYPE=Release -DSHORE_SDK_PATH=${YOUR_SHORE_SDK_PATH} -DSHORE_VERSION=300 ../
 cmake --build . --target install -- -j 4
 ```
 ## Usage

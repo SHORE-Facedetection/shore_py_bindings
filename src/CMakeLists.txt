@@ -18,7 +18,7 @@ set_target_properties(${SHORE_BINDINGS}
         SUFFIX ${PYTHON_MODULE_EXTENSION}
         OUTPUT_NAME shore
         PREFIX ""
-        INSTALL_RPATH "."
+        INSTALL_RPATH "\$ORIGIN"
 )
 target_compile_definitions(${SHORE_BINDINGS}
     PUBLIC

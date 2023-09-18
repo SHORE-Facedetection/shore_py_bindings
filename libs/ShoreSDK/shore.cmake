@@ -1,5 +1,5 @@
 set(SHORE_SDK_PATH ${CMAKE_SOURCE_DIR}/ShoreSDK CACHE PATH "Select path to SHORE SDK!")
-set(SHORE_VERSION 200 CACHE STRING "Select required version of SHORE!" )
+set(SHORE_VERSION 300 CACHE STRING "Select required version of SHORE!" )
 set(SHORE_LIB_PREFIX CACHE STRING 
     "Select Shore lib Prefix(e.g. Win32|Win64|Linux_x64|Linux_x86|Linux_armv7hf). Leave empty to autodetect")
 
@@ -44,7 +44,6 @@ set_target_properties(shore PROPERTIES INTERFACE_INCLUDE_DIRECTORIES ${SHORE_SDK
 set(SHORE_MODEL_SOURCE 
     ${SHORE_SDK_PATH}/Model/AgeGender_28x28_2020_12_01_112145.cpp
     ${SHORE_SDK_PATH}/Model/Age_28x28_2009_09_17_131241.cpp
-    ${SHORE_SDK_PATH}/Model/Age_28x28_2020_10_12_114538.cpp
     ${SHORE_SDK_PATH}/Model/Angry_26x26_2008_10_21_152601.cpp
     ${SHORE_SDK_PATH}/Model/Expression_28x28_2021_09_17_084600.cpp
     ${SHORE_SDK_PATH}/Model/FaceFrontId_36x44_2009_08_07_122105.cpp
