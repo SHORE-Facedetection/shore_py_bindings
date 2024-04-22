@@ -49,9 +49,9 @@ set (INSTALL_COPYRIGHT_DIR ${INSTALL_ROOT}/Copyright)
 install (DIRECTORY DESTINATION ${INSTALL_COPYRIGHT_DIR})
 install (
         FILES
-            ${CMAKE_SOURCE_DIR}/libs/pybind11-2.8.1/LICENSE
+        ${CMAKE_SOURCE_DIR}/${PYBIND_DIR}/LICENSE
         DESTINATION
-            ${INSTALL_COPYRIGHT_DIR}/pybind11-2.8.1
+            ${INSTALL_COPYRIGHT_DIR}/pybind/
 )
 # License of SHORE
 get_target_property(SHORE_SDK_DIR shore SHORE_SDK_DIR)

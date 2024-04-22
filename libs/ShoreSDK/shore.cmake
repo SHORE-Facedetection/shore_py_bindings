@@ -1,5 +1,5 @@
 set(SHORE_SDK_PATH ${CMAKE_SOURCE_DIR}/ShoreSDK CACHE PATH "Select path to SHORE SDK!")
-set(SHORE_VERSION 300 CACHE STRING "Select required version of SHORE!" )
+set(SHORE_VERSION 310 CACHE STRING "Select required version of SHORE!" )
 set(SHORE_LIB_PREFIX CACHE STRING 
     "Select Shore lib Prefix(e.g. Win32|Win64|Linux_x64|Linux_x86|Linux_armv7hf). Leave empty to autodetect")
 
