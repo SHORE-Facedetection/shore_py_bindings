@@ -137,7 +137,6 @@ PYBIND11_MODULE(shore, shoreModule) {
         "Applies the Shore engine to the given image",
         pybind11::arg("image"),
         pybind11::arg("colorSpace") = "BGR",
-        py::call_guard<py::gil_scoped_release>(),
         pybind11::return_value_policy::reference);
 
     // Bind Region class (need nodelete because of protected destructor).
